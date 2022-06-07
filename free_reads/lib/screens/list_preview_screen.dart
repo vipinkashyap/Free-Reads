@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:free_reads/blocs/bloc/books_bloc.dart';
+import 'package:free_reads/models/list_picks.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:free_reads/models/models.dart';
 import 'package:free_reads/screens/screens.dart';
-import 'package:free_reads/services/api_services/nyt_api_service.dart';
+
+import '../services/services.dart';
 
 class ListPreviewScreen extends StatefulWidget {
-  final String listTitle;
-  final String encodedName;
-  const ListPreviewScreen(
-      {Key? key, required this.listTitle, required this.encodedName})
-      : super(key: key);
+  const ListPreviewScreen({Key? key}) : super(key: key);
 
   @override
   _ListPreviewScreenState createState() => _ListPreviewScreenState();
@@ -19,58 +18,60 @@ class _ListPreviewScreenState extends State<ListPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.listTitle,
-          style: GoogleFonts.merriweather(),
+        appBar: AppBar(
+          title: Text(
+            'Browse Books',
+            style: GoogleFonts.merriweather(),
+          ),
+          centerTitle: true,
         ),
-        centerTitle: true,
-      ),
-      body: FutureBuilder<List<dynamic>>(
-          future: NytApiService().fetchCategoryBooks(widget.encodedName),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(snapshot.error.toString()),
-              );
-            } else if (snapshot.hasData &&
-                snapshot.connectionState == ConnectionState.done) {
-              return GridView.builder(
-                  padding: const EdgeInsets.only(top: 10),
-                  itemCount: snapshot.data.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 15,
-                  ),
-                  itemBuilder: (BuildContext context, int index) {
-                    var result = snapshot.data;
-                    var parsedResult = ListPicks.fromJson(result[index]);
+        body: BlocBuilder<BooksBloc, BooksState>(builder: ((context, state) {
+          if (state is BooksLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          if (state is BooksLoaded) {
+            List<ListPicks> books = state.booksList;
+            return GridView.builder(
+                padding: const EdgeInsets.only(top: 10),
+                itemCount: books.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 4,
+                  mainAxisSpacing: 15,
+                ),
+                itemBuilder: (BuildContext context, int index) {
+                  ListPicks book = books[index];
 
-                    return GestureDetector(
-                        onTap: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return BookDetailScreen(
-                              bookTitle: parsedResult.title,
-                              bookAuthor: parsedResult.author,
-                              bookDescription: parsedResult.description,
-                              bookImage: parsedResult.bookImage,
-                              bookBuyLinks: parsedResult.buyLinks,
-                              primaryIsbn13: parsedResult.primaryIsbn13,
-                            );
-                          }));
-                        },
-                        child: Hero(
-                            tag: parsedResult.title,
-                            child: Image.network(parsedResult.bookImage)));
-                  });
-            } else {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          }),
-    );
+                  return GestureDetector(
+                      onTap: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                          return BlocProvider<BooksBloc>.value(
+                            value: BooksBloc(
+                                NytApiService(), LibGenApiService())
+                              ..add(
+                                  FetchDownloadLinks(isbn: book.primaryIsbn13)),
+                            child: BookDetailScreen(
+                              bookTitle: book.title,
+                              bookAuthor: book.author,
+                              bookDescription: book.description,
+                              bookImage: book.bookImage,
+                              bookBuyLinks: book.buyLinks,
+                              primaryIsbn13: book.primaryIsbn13,
+                            ),
+                          );
+                        }));
+                      },
+                      child: Hero(
+                          tag: book.title,
+                          child: Image.network(book.bookImage)));
+                });
+          }
+          return const Center(
+            child: Text('Unknown State'),
+          );
+        })));
   }
 }

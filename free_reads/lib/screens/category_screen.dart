@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:free_reads/blocs/bloc/books_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:free_reads/models/list_info.dart';
 import 'package:free_reads/screens/screens.dart';
-import 'package:free_reads/services/api_services/nyt_api_service.dart';
+
+import '../services/services.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({Key? key}) : super(key: key);
@@ -15,26 +18,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Book Categories',
-          style: GoogleFonts.merriweather(),
+        appBar: AppBar(
+          title: Text(
+            'Book Categories',
+            style: GoogleFonts.merriweather(),
+          ),
+          centerTitle: true,
         ),
-        centerTitle: true,
-      ),
-      body: FutureBuilder<List<dynamic>>(
-        future: NytApiService().fetchBookCategories(),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(snapshot.error.toString()),
+        body: BlocBuilder<BooksBloc, BooksState>(builder: ((context, state) {
+          if (state is CategoriesLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
             );
-          } else if (snapshot.hasData &&
-              snapshot.connectionState == ConnectionState.done) {
+          }
+          if (state is CategoriesLoaded) {
             return ListView.separated(
                 itemBuilder: (BuildContext context, int index) {
-                  var result = ListInfo.fromJson(snapshot.data[index]);
-                  var displayName = result.displayName;
+                  ListInfo bookCategory = state.categoryList[index];
 
                   return ListTile(
                       title: TextButton(
@@ -43,7 +43,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        displayName,
+                        bookCategory.displayName,
                         style: GoogleFonts.merriweather(
                             color: Colors.white, fontSize: 20),
                       ),
@@ -51,9 +51,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     onPressed: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return ListPreviewScreen(
-                          listTitle: result.displayName,
-                          encodedName: result.encodedName,
+                        return BlocProvider<BooksBloc>.value(
+                          value: BooksBloc(NytApiService(), LibGenApiService())
+                            ..add(FetchBooksByCategory(
+                                encodedName: bookCategory.encodedName)),
+                          child: const ListPreviewScreen(),
                         );
                       }));
                     },
@@ -64,14 +66,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     color: Colors.grey,
                   );
                 },
-                itemCount: snapshot.data.length);
-          } else {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+                itemCount: state.categoryList.length);
           }
-        },
-      ),
-    );
+          return const Center(
+            child: Text('Unknown State'),
+          );
+        })));
   }
 }

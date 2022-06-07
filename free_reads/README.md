@@ -1,16 +1,13 @@
 # free_reads
 
-A new Flutter project.
+An app that lets users browse books reviewed by the New York Times along with links to download the books from Libgen
 
-## Getting Started
+## How this was done
 
-This project is a starting point for a Flutter application.
+- Information is sourced using the [NYTimes books API](https://developer.nytimes.com/docs/books-product/1/overview) and download links come from [Libgen](https://libgen.is/)
+- A books bloc is the brain of the flutter app (dependency: flutter_bloc)
+- The intent is to have users browse curated books and buy or download if interested
 
-A few resources to get you started if this is your first Flutter project:
+## App Demo
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+![Simulator Screen Recording - iPhone 13 Pro - 2022-06-07 at 15 17 58](https://user-images.githubusercontent.com/16275252/172492586-220590df-2af3-4eca-ab97-b4eccf823631.gif)

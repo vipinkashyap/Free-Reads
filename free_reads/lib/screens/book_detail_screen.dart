@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:free_reads/blocs/bloc/books_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:free_reads/models/buy_link.dart';
-import 'package:free_reads/services/api_services/libgen_api_service.dart';
-import 'package:free_reads/services/api_services/nyt_api_service.dart';
+
+import '../services/services.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final String bookTitle;
@@ -36,119 +40,86 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           ),
           centerTitle: true,
         ),
-        body: FutureBuilder<List<String>>(
-          future: LibGenApiService(isbn: widget.primaryIsbn13).makeRequest(),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Hero(
-                          tag: widget.bookTitle,
-                          child: Image.network(widget.bookImage)),
-                      Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Text(
-                          widget.bookDescription,
-                          style: GoogleFonts.merriweather(),
-                        ),
+        body: BlocBuilder<BooksBloc, BooksState>(builder: ((context, state) {
+          if (state is FetchingDownloadLinks) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          if (state is DownloadLinksLoaded) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Hero(
+                        tag: widget.bookTitle,
+                        child: Image.network(widget.bookImage)),
+                    Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Text(
+                        widget.bookDescription,
+                        style: GoogleFonts.merriweather(),
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        color: Colors.deepOrangeAccent,
-                        height: 70,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          shrinkWrap: true,
-                          itemCount: snapshot.data.length,
-                          itemBuilder: (context, index) {
-                            return MaterialButton(
-                                child: Text(
-                                  'Mirror ${index + 1}',
-                                  style: GoogleFonts.merriweather(),
-                                ),
-                                onPressed: () {
-                                  NytApiService()
-                                      .launchUrl(snapshot.data[index]);
-                                });
-                          },
-                        ),
-                      ),
-                      GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  mainAxisSpacing: 1,
-                                  crossAxisSpacing: 1),
-                          itemCount: widget.bookBuyLinks.length,
-                          shrinkWrap: true,
-                          itemBuilder: (BuildContext context, int index) {
-                            return TextButton(
-                              child:
-                                  Text(widget.bookBuyLinks[index].sellerName),
-                              onPressed: () {
-                                NytApiService().launchUrl(
-                                    widget.bookBuyLinks[index].buyUrl);
-                              },
-                            );
-                          })
-                    ],
-                  ),
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Hero(
-                          tag: widget.bookTitle,
-                          child: Image.network(widget.bookImage)),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          widget.bookDescription,
-                          style: GoogleFonts.merriweather(),
-                        ),
-                      ),
-                      GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  mainAxisSpacing: 1,
-                                  crossAxisSpacing: 1),
-                          itemCount: widget.bookBuyLinks.length,
-                          shrinkWrap: true,
-                          itemBuilder: (BuildContext context, int index) {
-                            return TextButton(
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      color: Colors.orangeAccent,
+                      height: 70,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        shrinkWrap: true,
+                        itemCount: state.downloadUrls.length,
+                        itemBuilder: (context, index) {
+                          return MaterialButton(
                               child: Text(
-                                widget.bookBuyLinks[index].sellerName,
+                                'D/L from ${index + 1}',
                                 style: GoogleFonts.merriweather(),
                               ),
                               onPressed: () {
-                                NytApiService().launchUrl(
+                                UrlService()
+                                    .launchUrl(state.downloadUrls[index]);
+                              });
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      color: Colors.white,
+                      child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 1,
+                                  crossAxisSpacing: 1),
+                          itemCount: widget.bookBuyLinks.length,
+                          shrinkWrap: true,
+                          itemBuilder: (BuildContext context, int index) {
+                            return TextButton(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child:
+                                    Text(widget.bookBuyLinks[index].sellerName),
+                              ),
+                              onPressed: () {
+                                UrlService().launchUrl(
                                     widget.bookBuyLinks[index].buyUrl);
                               },
                             );
-                          })
-                    ],
-                  ),
+                          }),
+                    )
+                  ],
                 ),
-              );
-            } else {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          },
-        ));
+              ),
+            );
+          }
+          return const Center(
+            child: Text('Unknown State'),
+          );
+        })));
   }
 }
