@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:free_reads/models/list_info.dart';
 import 'package:free_reads/models/list_picks.dart';

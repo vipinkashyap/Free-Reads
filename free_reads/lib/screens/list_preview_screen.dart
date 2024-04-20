@@ -8,13 +8,13 @@ import 'package:free_reads/screens/screens.dart';
 import '../services/services.dart';
 
 class ListPreviewScreen extends StatefulWidget {
-  const ListPreviewScreen({Key? key}) : super(key: key);
+  const ListPreviewScreen({super.key});
 
   @override
-  _ListPreviewScreenState createState() => _ListPreviewScreenState();
+  ListPreviewScreenState createState() => ListPreviewScreenState();
 }
 
-class _ListPreviewScreenState extends State<ListPreviewScreen> {
+class ListPreviewScreenState extends State<ListPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -5,6 +5,6 @@ import 'package:free_reads/books_bloc_observer.dart';
 import 'app.dart';
 
 void main() {
-  BlocOverrides.runZoned(() => runApp(const MyApp()),
-      blocObserver: BooksBlocObserver());
+  Bloc.observer = BooksBlocObserver();
+  runApp(const MyApp());
 }

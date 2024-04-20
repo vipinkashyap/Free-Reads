@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:free_reads/blocs/bloc/books_bloc.dart';
@@ -16,20 +14,20 @@ class BookDetailScreen extends StatefulWidget {
   final List<BuyLink> bookBuyLinks;
   final String primaryIsbn13;
   const BookDetailScreen({
-    Key? key,
+    super.key,
     required this.bookTitle,
     required this.bookDescription,
     required this.bookImage,
     required this.bookAuthor,
     required this.bookBuyLinks,
     required this.primaryIsbn13,
-  }) : super(key: key);
+  });
 
   @override
-  _BookDetailScreenState createState() => _BookDetailScreenState();
+  BookDetailScreenState createState() => BookDetailScreenState();
 }
 
-class _BookDetailScreenState extends State<BookDetailScreen> {
+class BookDetailScreenState extends State<BookDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,32 +62,35 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                         style: GoogleFonts.merriweather(),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      color: Colors.orangeAccent,
-                      height: 70,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        shrinkWrap: true,
-                        itemCount: state.downloadUrls.length,
-                        itemBuilder: (context, index) {
-                          return MaterialButton(
-                              child: Text(
-                                'D/L from ${index + 1}',
-                                style: GoogleFonts.merriweather(),
-                              ),
-                              onPressed: () {
-                                UrlService()
-                                    .launchUrl(state.downloadUrls[index]);
-                              });
-                        },
+                    Visibility(
+                      visible: state.downloadUrls.isNotEmpty,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        color: Colors.orangeAccent,
+                        height: 70,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          itemCount: state.downloadUrls.length,
+                          itemBuilder: (context, index) {
+                            return MaterialButton(
+                                child: Text(
+                                  'D/L from ${index + 1}',
+                                  style: GoogleFonts.merriweather(),
+                                ),
+                                onPressed: () {
+                                  UrlService()
+                                      .launchUrl(state.downloadUrls[index]);
+                                });
+                          },
+                        ),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 10,
                     ),
                     Container(
-                      color: Colors.white,
+                      color: Theme.of(context).primaryColor,
                       child: GridView.builder(
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
@@ -100,6 +101,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           shrinkWrap: true,
                           itemBuilder: (BuildContext context, int index) {
                             return TextButton(
+                              style: const ButtonStyle(
+                                  alignment: Alignment.centerLeft,
+                                  enableFeedback: true),
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
                                 child:

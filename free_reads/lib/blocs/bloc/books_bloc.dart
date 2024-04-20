@@ -1,10 +1,9 @@
-import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:free_reads/models/list_info.dart';
 import 'package:free_reads/models/list_picks.dart';
 import 'package:free_reads/services/data/libgen_api_service.dart';
 import 'package:free_reads/services/data/nyt_api_service.dart';
-import 'package:meta/meta.dart';
 
 part 'books_event.dart';
 part 'books_state.dart';
@@ -37,9 +36,13 @@ class BooksBloc extends Bloc<BooksEvent, BooksState> {
   }
 
   void _onFetchDownloadLinks(event, emit) async {
-    emit(FetchingDownloadLinks());
-    final List<String>? downloadUrls =
-        await _libGenApiService.makeRequest(event.isbn);
-    emit(DownloadLinksLoaded(downloadUrls: downloadUrls!));
+    try {
+      emit(FetchingDownloadLinks());
+      final List<String>? downloadUrls =
+          await _libGenApiService.makeRequest(event.isbn);
+      emit(DownloadLinksLoaded(downloadUrls: downloadUrls ?? []));
+    } catch (e) {
+      emit(DownloadLinksLoaded(downloadUrls: const <String>[]));
+    }
   }
 }
